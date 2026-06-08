@@ -11,5 +11,5 @@ def hello_kenya(request):
 
 # Class Based Views
 class HelloTanzania(View):
-    def HelloTanzania(self, request):
+    def get(self, request):
         return HttpResponse("Habari Kutoka Tanzania!")
