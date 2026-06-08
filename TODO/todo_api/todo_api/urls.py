@@ -1,5 +1,5 @@
 """
-URL configuration for django_project project.
+URL configuration for todo_api project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -20,6 +20,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("books.urls")),
-    path("api/", include("apis.urls")),
+    path("api/", include("todos.urls")),
 ]
