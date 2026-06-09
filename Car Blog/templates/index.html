@@ -1,0 +1,658 @@
+This is a complete, single-file solution. It includes the HTML structure, modern CSS styling (Car Aesthetics theme), and the JavaScript logic to fetch, filter, and manage your API data.
+
+Save this code as `index.html`. It is self-contained, responsive, and set up to connect to your running backend.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTOVERSE | Car API Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --accent: #38bdf8; /* Cyan */
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #334155;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.2s; }
+        ul { list-style: none; }
+
+        /* --- LAYOUT & UTILS --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        .btn-primary { background: var(--accent); color: #0f172a; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+        .btn-outline { border: 1px solid var(--border); background: transparent; color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-input); }
+        .btn-danger { background: var(--danger); color: white; }
+        .hidden { display: none !important; }
+
+        /* --- HEADER --- */
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            padding: 15px 0;
+        }
+        .nav-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+        .search-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            width: 300px;
+        }
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            margin-left: 10px;
+            outline: none;
+        }
+        .search-box button { background: none; border: none; color: var(--accent); cursor: pointer; }
+
+        /* --- CAR GRID --- */
+        .content-area { padding: 40px 0; }
+        
+        .filters {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filters input {
+            padding: 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 6px;
+            width: 200px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* --- CAR CARD --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent);
+        }
+        .card-image-container {
+            height: 200px;
+            background: #0f172a;
+            position: relative;
+        }
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.9);
+        }
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .tag {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            align-self: flex-start;
+            width: fit-content;
+        }
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        .card-price {
+            font-size: 1.5rem;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .card-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        .card-desc {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        .card-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* --- DETAIL MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal {
+            background: var(--bg-card);
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-header { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .modal-title { font-size: 2rem; font-weight: 800; margin-bottom: 5px; }
+        .modal-price { font-size: 2.5rem; color: var(--accent); font-weight: 700; }
+        
+        /* --- FORMS --- */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-muted); }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        .form-group input:focus { border-color: var(--accent); outline: none; }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        /* --- TABLES --- */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; background: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; color: var(--text-main); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .status-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .search-box { width: 100%; margin-bottom: 10px; }
+            .modal { width: 95%; padding: 20px; }
+            .modal-title { font-size: 1.5rem; }
+            .modal-price { font-size: 1.5rem; }
+            th { font-size: 0.8rem; }
+            td { font-size: 0.85rem; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="container nav-flex">
+            <a href="#" class="logo">Auto<span style="color:white">Verse</span>.</a>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search car (Model, Price)...">
+                <button onclick="searchCars()">Search</button>
+            </div>
+
+            <button class="btn btn-primary" onclick="openModal()">+ Add Car</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container content-area">
+        
+        <!-- Filter Bar -->
+        <div class="filters">
+            <input type="text" id="filterModel" placeholder="Filter by Model (e.g., Porsche)">
+            <input type="number" id="filterPrice" placeholder="Min Price ($)" min="0" oninput="applyFilter()">
+        </div>
+
+        <!-- Car Grid -->
+        <div class="grid" id="carGrid">
+            <!-- JS will populate cards here -->
+        </div>
+    </main>
+
+    <!-- Create Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Car Details</h2>
+                <div class="modal-price" id="modalPrice">$0.00</div>
+                <div id="modalModel" style="color: var(--text-muted); font-size: 1rem;"></div>
+            </div>
+
+            <form id="createCarForm" onsubmit="addCar(event)">
+                <input type="hidden" id="carId">
+                
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="inputTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="inputYear" required>
+                </div>
+                <div class="form-group">
+                    <label>Model</label>
+                    <input type="text" id="inputModel" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="inputDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Starting Price ($)</label>
+                    <input type="number" id="inputPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Miles / Gal</label>
+                    <input type="text" id="inputMilesGal" placeholder="e.g. 23 MPG">
+                </div>
+                <div class="form-group">
+                    <label>HP</label>
+                    <input type="number" id="inputHP">
+                </div>
+                <div class="form-group">
+                    <label>Rating</label>
+                    <input type="text" id="inputRating" placeholder="e.g. 4.6">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Publish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail View Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <button class="close-modal" onclick="closeDetailModal()">Close</button>
+            <div class="modal-header">
+                <h1 class="modal-title" id="detailTitle">Car Details</h1>
+                <div class="modal-price" id="detailPrice">$0.00</div>
+            </div>
+            <div class="card-body" style="display: flex; align-items: center; gap: 20px;">
+                <img id="detailImage" src="" alt="Car Preview" class="card-image" style="max-height: 200px; object-fit: cover; border-radius: 8px;">
+                <div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 5px;" id="detailTitle"></h2>
+                    <p id="detailDescription" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+                    <div class="card-meta">
+                        <span id="detailModel"></span> • <span id="detailYear"></span>
+                    </div>
+                    <div class="card-meta" style="margin-top: 10px;">
+                        <span>Price:</span> <strong id="detailPrice" style="color: var(--accent); margin-left: 10px;"></strong>
+                        <span>HP:</span> <strong id="detailHP"></strong>
+                        <span>Rating:</span> <strong id="detailRating"></strong>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-outline" style="width: 100%; margin-top: 20px;" onclick="openModal()">Edit Details</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. DATA & STATE ---
+        // We use fetch to pull from the backend as requested
+        let allCars = [];
+        let filteredCars = [];
+        let selectedCarId = null;
+
+        // --- 2. INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCars();
+            updatePriceDisplay(allCars[0]); // Default value if empty
+            setupEventListeners();
+        });
+
+        // --- 3. FETCH FUNCTIONS ---
+        async function fetchCars() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/cars');
+                if (!response.ok) throw new Error('Connection refused');
+                allCars = await response.json();
+                renderGrid();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('carGrid').innerHTML = 
+                    '<div class="container" style="text-align:center; padding: 50px;"><h2>Connection Error</h2><p id="err" style="color:var(--danger)">Failed to connect to server.</p></div>';
+            }
+        }
+
+        function filterData() {
+            const model = document.getElementById('filterModel').value.toLowerCase();
+            const price = document.getElementById('filterPrice').value;
+
+            const filtered = allCars.filter(car => {
+                const matchModel = car.model.toLowerCase().includes(model);
+                const matchPrice = parseFloat(car.starting_price) >= parseFloat(price) || price === '';
+                return matchModel && matchPrice;
+            });
+
+            // Reorder to show newest first
+            filteredCars = [...filtered].reverse(); 
+            renderGrid();
+        }
+
+        // --- 4. RENDER FUNCTIONS ---
+        function renderGrid() {
+            const grid = document.getElementById('carGrid');
+            
+            if (filteredCars.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 50px; color: var(--text-muted);">No cars found matching criteria.</div>';
+                return;
+            }
+
+            grid.innerHTML = filteredCars.map(car => {
+                // Format currency with $
+                const priceFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(parseFloat(car.starting_price));
+                
+                return `
+                <div class="card">
+                    <div class="card-image-container">
+                        <img src="${car.image || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${car.title}" class="card-image">
+                    </div>
+                    <div class="card-body">
+                        <span class="tag">${car.year} Model ${car.model}</span>
+                        <h3 class="card-title">${car.title}</h3>
+                        <div class="card-price">${priceFormatted}</div>
+                        <div class="card-meta">
+                            ${car.milespergalon} MPG | ${car.horsepower} HP
+                        </div>
+                        <p class="card-desc">${car.description}</p>
+                        <div class="card-footer">
+                            <span><small>Rated: ${car.rating}</small></span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // --- 5. ACTION FUNCTIONS ---
+        
+        // Search/Filter
+        function searchCars() {
+            const query = document.getElementById('searchInput').value;
+            if(query) {
+                const regex = new RegExp(query, 'i');
+                filteredCars = allCars.filter(car => regex.test(car.title) || regex.test(car.description) || regex.test(car.model));
+                renderGrid();
+            } else {
+                filterData();
+            }
+        }
+
+        // Modal & Detail Open
+        function openModal(carId) {
+            const modalOverlay = document.getElementById('modalOverlay');
+            const detailModal = document.getElementById('detailModal');
+            
+            // Determine if we are viewing detail view (existing) or creating new
+            let carObj = null;
+            let modalTitle = '';
+            let modalPrice = '';
+            let model = '';
+
+            if (carId) {
+                // Fetching detail logic
+                fetch(`http://127.0.0.1:8000/cars/${carId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        carObj = data;
+                        model = carObj.model || '';
+                        modalTitle = 'Edit Car Details';
+                        modalPrice = `$${parseFloat(data.starting_price).toFixed(2)}`;
+                        document.getElementById('detailTitle').innerText = carObj.title;
+                        document.getElementById('detailPrice').innerText = modalPrice;
+                        document.getElementById('detailModel').innerText = `Model: ${carObj.model}`;
+                        document.getElementById('detailYear').innerText = `${carObj.year}`;
+                        document.getElementById('detailHP').innerText = `${carObj.horsepower}`;
+                        document.getElementById('detailRating').innerText = `${carObj.rating}`;
+                        document.getElementById('detailDescription').innerText = carObj.description;
+                        document.getElementById('detailImage').src = carObj.image || 'https://via.placeholder.com/300x200?text=Image';
+                        openDetailModal();
+                    })
+                    .catch(() => alert('Error loading details'));
+
+            } else {
+                // Fetching create list logic
+                modalTitle = 'Add New Listing';
+                document.getElementById('modalPrice').innerText = '$0.00';
+                document.getElementById('inputPrice').value = '';
+                document.getElementById('carId').value = '';
+                document.getElementById('modalModel').innerText = '';
+                document.getElementById('inputTitle').value = '';
+                document.getElementById('inputYear').value = '';
+                document.getElementById('inputModel').value = '';
+                document.getElementById('inputDescription').value = '';
+                document.getElementById('inputMilesGal').value = '';
+                document.getElementById('inputHP').value = '';
+                document.getElementById('inputRating').value = '';
+                
+                // If carId is passed from the top, close detail modal and open create
+                if(selectedCarId) {
+                    openDetailModal();
+                }
+                openModal();
+            }
+
+            modalOverlay.classList.add('active');
+        }
+
+        // Close Modals
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            // Reset form
+            document.getElementById('createCarForm').reset();
+        }
+
+        function openDetailModal() {
+            const modalOverlay = document.getElementById('modalOverlay');
+            const detailModal = document.getElementById('detailModal');
+            detailModal.classList.add('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // --- 6. EVENT HANDLERS ---
+
+        // Form Submit (New Car)
+        function addCar(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('carId').value;
+            const carData = {
+                id: id ? parseInt(id) : Date.now(), // If ID provided, use it. Otherwise create new ID
+                title: document.getElementById('inputTitle').value,
+                description: document.getElementById('inputDescription').value,
+                image: document.getElementById('inputTitle').value && id ? null : (selectedCarId ? selectedCarId : document.getElementById('inputTitle').value), // Logic to get image
+                year: parseInt(document.getElementById('inputYear').value) || '',
+                model: document.getElementById('inputModel').value,
+                starting_price: parseFloat(document.getElementById('inputPrice').value) || '',
+                milespergalon: document.getElementById('inputMilesGal').value,
+                horsepower: parseInt(document.getElementById('inputHP').value) || '',
+                rating: document.getElementById('inputRating').value
+            };
+
+            // Add to allCars
+            const carIndex = allCars.findIndex(c => c.id === carData.id || (c.year && c.year == carData.year && c.model && c.model == carData.model));
+
+            if (carIndex === -1) {
+                allCars.push(carData);
+            } else {
+                allCars[carIndex] = carData;
+            }
+
+            fetchCars(); // Refresh list
+            closeModal();
+        }
+
+        // Update Details (PUT/PATCH)
+        async function updateCarData(id, newData) {
+            await fetch(`http://127.0.0.1:8000/cars/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newData)
+            });
+            closeModal();
+            fetchCars(); // Refresh
+        }
+
+        function setupEventListeners() {
+            document.getElementById('createCarForm').addEventListener('submit', addCar);
+            
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const overlays = document.querySelectorAll('.modal-overlay');
+                if (event.target == overlays[0]) {
+                    closeModal();
+                }
+            }
+
+            // Apply filters on load
+            filterData();
+        }
+
+        // Update Price Text based on data change (if detail modal is open)
+        function updatePriceDisplay(car) {
+            const el = document.getElementById('modalPrice');
+            if (car) {
+                el.innerText = `$${parseFloat(car.starting_price).toFixed(2)}`;
+            } else {
+                el.innerText = '$0.00';
+            }
+        }
+    </script>
+</body>
+</html>
+```
